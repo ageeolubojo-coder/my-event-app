@@ -1,34 +1,77 @@
+
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import useEventStore;
+import { getEvents } from "../services/event.service.js";
+
+const initialEvents = [];
 
 const useEventStore = create(
   persist(
     (set, get) => ({
-
-      // ==============================
-      // EVENTS
-      // ==============================
-
       events: initialEvents,
 
-      // ==============================
-      // GET EVENT BY ID
-      // ==============================
+      // FETCH EVENTS FROM BACKEND
+      
+fetchEvents: async () => {
+  try {
+    const response = await getEvents();
 
+    // Lines 17–20: Debug the API response
+    console.log("Full API response:", response);
+    console.log("Response data:", response?.data);
+    console.log(
+      "Is response.data an array:",
+      Array.isArray(response?.data)
+    );
+
+    // Check whether the request failed
+    if (!response || response.success === false) {
+      throw new Error(
+        response?.message || "Failed to fetch events"
+      );
+    }
+
+    // Check the shape of the returned data
+    const events = response.data;
+
+    if (!Array.isArray(events)) {
+      console.error(
+        "Expected an array of events but received:",
+        events
+      );
+
+      return {
+        success: false,
+        message: "The API response does not contain an events array",
+      };
+    }
+
+    set({ events });
+
+    return {
+      success: true,
+      data: events,
+    };
+  } catch (error) {
+    console.error("Failed to fetch events:", error);
+
+    return {
+      success: false,
+      message: error.message || "Failed to fetch events",
+    };
+  }
+},
+
+
+      // GET ONE EVENT FROM THE STORE
       getEventById: (eventId) => {
-        const events = get().events;
-
-        return events.find((event) => event.id === eventId);
+        return get().events.find(
+          (event) => String(event.id) === String(eventId),
+        );
       },
 
-      // ==============================
-      // CREATE EVENT
-      // ==============================
-
+      // CREATE EVENT - LOCAL VERSION FOR NOW
       createEvent: (newEvent) => {
-
-        // Validate required fields
         if (
           !newEvent.name?.trim() ||
           !newEvent.description?.trim() ||
@@ -42,7 +85,6 @@ const useEventStore = create(
           };
         }
 
-        // Validate date
         if (isNaN(new Date(newEvent.date).getTime())) {
           return {
             success: false,
@@ -50,7 +92,6 @@ const useEventStore = create(
           };
         }
 
-        // Create event object
         const payload = {
           id: Date.now().toString(),
           name: newEvent.name.trim(),
@@ -61,7 +102,6 @@ const useEventStore = create(
           thunmailUrl: newEvent.thunmailUrl.trim(),
         };
 
-        // Add event to store
         set((state) => ({
           events: [payload, ...state.events],
         }));
@@ -73,14 +113,13 @@ const useEventStore = create(
         };
       },
 
-      // ==============================
-      // UPDATE EVENT
-      // ==============================
-
+      // UPDATE EVENT - LOCAL VERSION FOR NOW
       updateEvent: (eventId, updatedEvent) => {
         const events = get().events;
 
-        const event = events.find((event) => event.id === eventId);
+        const event = events.find(
+          (item) => String(item.id) === String(eventId),
+        );
 
         if (!event) {
           return {
@@ -95,8 +134,10 @@ const useEventStore = create(
         };
 
         set({
-          events: events.map((event) =>
-            event.id === eventId ? updatedEventPayload : event
+          events: events.map((item) =>
+            String(item.id) === String(eventId)
+              ? updatedEventPayload
+              : item,
           ),
         });
 
@@ -107,14 +148,13 @@ const useEventStore = create(
         };
       },
 
-      // ==============================
-      // DELETE EVENT
-      // ==============================
-
+      // DELETE EVENT - LOCAL VERSION FOR NOW
       deleteEvent: (eventId) => {
         const events = get().events;
 
-        const event = events.find((event) => event.id === eventId);
+        const event = events.find(
+          (item) => String(item.id) === String(eventId),
+        );
 
         if (!event) {
           return {
@@ -124,7 +164,9 @@ const useEventStore = create(
         }
 
         set({
-          events: events.filter((event) => event.id !== eventId),
+          events: events.filter(
+            (item) => String(item.id) !== String(eventId),
+          ),
         });
 
         return {
@@ -133,12 +175,11 @@ const useEventStore = create(
         };
       },
     }),
-
     {
       name: "ao-event-storage",
       storage: createJSONStorage(() => localStorage),
-    }
-  )
+    },
+  ),
 );
 
 export default useEventStore;

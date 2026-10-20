@@ -1,36 +1,99 @@
-const API_URL = "https://event-api-service-3jtj.onrender.com/api/v1";
 
-export const loginUser = async (loginData) => {
-  const response = await fetch(`${API_URL}/auth/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(loginData),
-  });
+import { backendFetch } from "../libs/backend-fetch";
+import { AUTH_ENDPOINTS } from "../libs/constant/index.js";
 
-  const data = await response.json();
+// LOGIN
+export const login = async (data) => {
+  try {
+    const response = await backendFetch(AUTH_ENDPOINTS.LOGIN, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
 
-  if (!response.ok) {
-    throw new Error(data.message || "Login failed");
+    if (!response || response.error) {
+      throw new Error(response?.error || "Login failed");
+    }
+
+    return response.data;
+  } catch (error) {
+    return { error: error.message };
   }
-
-  return data;
 };
-export const resetPassword = async (resetData) => {
-  const response = await fetch(`${API_URL}/auth/reset-password`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(resetData),
-  });
 
-  const data = await response.json();
+// REGISTER
+export const register = async (data) => {
+  try {
+    const response = await backendFetch(AUTH_ENDPOINTS.REGISTER, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
 
-  if (!response.ok) {
-    throw new Error(data.message || "Password reset failed");
+    if (!response || response.error) {
+      throw new Error(response?.error || "Registration failed");
+    }
+
+    return response.data;
+  } catch (error) {
+    return { error: error.message };
   }
+};
 
-  return data;
+// FORGOT PASSWORD
+export const forgotPassword = async (data) => {
+  try {
+    const response = await backendFetch(
+      AUTH_ENDPOINTS.FORGOT_PASSWORD,
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      }
+    );
+
+    if (!response || response.error) {
+      throw new Error(response?.error || "Password reset request failed");
+    }
+
+    return response.data;
+  } catch (error) {
+    return { error: error.message };
+  }
+};
+
+// REFRESH TOKEN
+export const refreshToken = async (data) => {
+  try {
+    const response = await backendFetch(
+      AUTH_ENDPOINTS.REFRESH_TOKEN,
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      }
+    );
+
+    if (!response || response.error) {
+      throw new Error(response?.error || "Token refresh failed");
+    }
+
+    return response.data;
+  } catch (error) {
+    return { error: error.message };
+  }
+};
+
+// GET CURRENT USER
+export const me = async (token) => {
+  try {
+    const response = await backendFetch(AUTH_ENDPOINTS.ME, {
+      method: "GET",
+      token,
+    });
+
+    if (!response || response.error) {
+      throw new Error(response?.error || "Failed to get user");
+    }
+
+    return response.data;
+  } catch (error) {
+    return { error: error.message };
+  }
 };

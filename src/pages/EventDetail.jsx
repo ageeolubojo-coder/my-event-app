@@ -2,24 +2,31 @@ import React from "react";
 import { useParams } from "react-router";
 import { events } from "../data";
 import Button from "../components/ui/Button";
-import { useEvent } from "../hooks/useEvent";
+// import { useEvent } from "../hooks/useEvent";
+import useEventStore from "../stores/useEvent.store.js";
 import { useNavigate } from "react-router";
 import { toast } from "react-toastify";
 
 const EventDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { getEventById, deleteEvent } = useEvent();
+  const getEventById = useEventStore((s) => s.eventById);
+  // const deleteEvent = useEventStore(s => s.deleteEvent);
+  // const { getEventById, deleteEvent } = useEvent();
 
-  const event = getEventById(id);
+  const response = getEventById(id);
 
-  if (!event) {
+  console.log("EventDetail response:", response);
+
+  if (!response.success) {
     return (
       <div className="p-6 text-[var(--text)] font-[var(--sans)]">
         Event not found
       </div>
     );
   }
+
+  const event = response.data;
 
   const formattedDate = new Date(event.date).toLocaleDateString("en-US", {
     weekday: "long",
@@ -37,14 +44,14 @@ const EventDetail = () => {
     navigate(`/events/${event.id}/edit`);
   };
   const handleDelete = () => {
-    const result = deleteEvent(id);
-    if (result.success) {
-      toast.success(result.message || "Event deleted successfully:");
-      navigate("/events");
-    } else {
-      toast.error(result.message);
-      console.error(result.message);
-    }
+    // const result = deleteEvent(id);
+    // if (result.success) {
+    //   toast.success(result.message || "Event deleted successfully:");
+    //   navigate("/events");
+    // } else {
+    //   toast.error(result.message);
+    //   console.error(result.message);
+    // }
   };
 
   return (
